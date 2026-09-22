@@ -77,10 +77,16 @@ export function AdminLayout({ children }: { children: ReactNode }) {
       {/* Mobile header */}
       <div className="flex h-16 items-center justify-between border-b border-gray-200 bg-white px-4 md:hidden">
         <div className="flex items-center gap-2">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600 text-white">
-            <QrCode size={18} />
-          </div>
-          <span className="font-bold text-gray-900">AbsensiQR</span>
+           <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Logo Generus Tangsel"
+                className="h-9 w-9 object-contain"
+              />
+              <span className="font-bold text-gray-900">
+                Generus Tangsel
+              </span>
+            </div>
         </div>
         <button
           onClick={() => setMobileOpen(!mobileOpen)}

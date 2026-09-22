@@ -73,7 +73,12 @@ export default function AttendancePage() {
 
     if (error) {
       setState('form');
-      setErrors({ form: error.message || 'Terjadi kesalahan. Silakan coba lagi.' });
+
+      const message = error.message.includes('Could not find the function')
+        ? 'Fungsi absensi di database belum tersedia. Pastikan migrasi Supabase terbaru sudah dijalankan.'
+        : error.message || 'Terjadi kesalahan. Silakan coba lagi.';
+
+      setErrors({ form: message });
       return;
     }
 
