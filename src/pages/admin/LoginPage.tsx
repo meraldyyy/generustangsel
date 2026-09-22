@@ -1,16 +1,24 @@
-import { useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Mail, Lock, ArrowRight } from 'lucide-react';
 import { useAuth } from '@/context/AuthContext';
 import { Button } from '@/components/ui/Button';
 
 export default function LoginPage() {
-  const { signIn } = useAuth();
+  const { signIn, resetPassword } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    if (window.location.hash.includes('type=recovery')) {
+      navigate('/reset-password', { replace: true });
+    }
+  }, [navigate]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -30,6 +38,19 @@ export default function LoginPage() {
     navigate('/dashboard');
   };
 
+  const handleResetRequest = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    setLoading(true);
+    const result = await resetPassword(email);
+    setLoading(false);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
+    setResetSent(true);
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-blue-600 via-blue-700 to-slate-800 px-4">
       <div className="w-full max-w-md">
@@ -47,9 +68,35 @@ export default function LoginPage() {
 
         <div className="rounded-2xl bg-white p-8 shadow-xl">
           <h2 className="mb-6 text-xl font-bold text-gray-900">
-            Masuk ke Dashboard
+            {showForgotPassword ? 'Reset Password' : 'Masuk ke Dashboard'}
           </h2>
 
+          {showForgotPassword ? (
+            resetSent ? (
+              <div className="space-y-4 text-center text-sm text-gray-600">
+                <p>Link reset password sudah dikirim ke email Anda. Cek inbox atau folder spam.</p>
+                <button type="button" onClick={() => setShowForgotPassword(false)} className="font-semibold text-blue-600 hover:text-blue-700">
+                  Kembali ke login
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={handleResetRequest} className="space-y-4">
+                <p className="text-sm text-gray-500">Masukkan email admin untuk menerima link reset password.</p>
+                <input
+                  type="email"
+                  required
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="admin@example.com"
+                  className="w-full rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                />
+                {error && <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
+                <Button type="submit" size="lg" className="w-full" disabled={loading}>
+                  {loading ? 'Mengirim...' : 'Kirim Link Reset'}
+                </Button>
+              </form>
+            )
+          ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-1.5">
               <label className="block text-sm font-medium text-gray-700">Email</label>
@@ -90,7 +137,11 @@ export default function LoginPage() {
               {loading ? 'Memproses...' : 'Masuk'}
               {!loading && <ArrowRight size={18} />}
             </Button>
+            <button type="button" onClick={() => { setShowForgotPassword(true); setError(null); }} className="w-full text-center text-sm font-semibold text-blue-600 hover:text-blue-700">
+              Lupa password?
+            </button>
           </form>
+          )}
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Akun admin dibuat oleh admin aktif melalui menu Kelola Admin.

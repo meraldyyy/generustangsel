@@ -9,6 +9,7 @@ import CreateEventPage from '@/pages/admin/CreateEventPage';
 import EventDetailPage from '@/pages/admin/EventDetailPage';
 import ScannerPage from '@/pages/admin/ScannerPage';
 import AdminsPage from '@/pages/admin/AdminsPage';
+import ResetPasswordPage from '@/pages/admin/ResetPasswordPage';
 
 import AttendancePage from '@/pages/public/AttendancePage';
 import VerifyPage from '@/pages/public/VerifyPage';
@@ -24,6 +25,7 @@ export default function App() {
 
           {/* Admin auth */}
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/reset-password" element={<ResetPasswordPage />} />
 
           {/* Admin protected */}
           <Route

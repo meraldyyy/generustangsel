@@ -8,6 +8,8 @@ interface AuthContextValue {
   isAdminActive: boolean;
   loading: boolean;
   signIn: (email: string, password: string) => Promise<{ error: string | null; hasSession: boolean }>;
+  resetPassword: (email: string) => Promise<{ error: string | null }>;
+  updatePassword: (password: string) => Promise<{ error: string | null }>;
   signOut: () => Promise<void>;
 }
 
@@ -74,12 +76,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return { error: error?.message ?? null, hasSession: Boolean(data.session) };
   };
 
+  const resetPassword = async (email: string) => {
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: `${window.location.origin}/reset-password`,
+    });
+    return { error: error?.message ?? null };
+  };
+
+  const updatePassword = async (password: string) => {
+    const { error } = await supabase.auth.updateUser({ password });
+    return { error: error?.message ?? null };
+  };
+
   const signOut = async () => {
     await supabase.auth.signOut();
   };
 
   return (
-    <AuthContext.Provider value={{ session, user, isAdminActive, loading, signIn, signOut }}>
+    <AuthContext.Provider value={{ session, user, isAdminActive, loading, signIn, resetPassword, updatePassword, signOut }}>
       {children}
     </AuthContext.Provider>
   );
