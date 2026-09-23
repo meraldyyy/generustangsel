@@ -1,8 +1,9 @@
 import { useEffect, useState, useMemo } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import {
-  ArrowLeft, QrCode, Download, Lock, Unlock, Users, Search, Trash2, CheckCircle2,
+  ArrowLeft, QrCode, Download, FileSpreadsheet, Lock, Unlock, Users, Search, Trash2, CheckCircle2,
 } from 'lucide-react';
+import * as XLSX from 'xlsx';
 import { AdminLayout } from '@/components/Layout';
 import { Card, Spinner, EmptyState } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
@@ -139,6 +140,30 @@ export default function EventDetailPage() {
     a.href = url;
     a.download = `qr-${event?.name.replace(/\s+/g, '-').toLowerCase()}.png`;
     a.click();
+  };
+
+  const exportAttendances = () => {
+    if (!event || filtered.length === 0) return;
+
+    const rows = filtered.map((attendance, index) => ({
+      No: index + 1,
+      Nama: attendance.name,
+      Desa: attendance.village,
+      Kelompok: attendance.group_name,
+      Kategori: attendance.age_category,
+      'Jenis Kelamin': attendance.gender ?? '-',
+      'Waktu Absen': formatDateTime(attendance.checked_in_at),
+      Status: attendance.verified_at ? 'Terverifikasi' : 'Belum',
+      'Diverifikasi oleh': attendance.verified_by
+        ? (adminNames[attendance.verified_by] ?? 'Admin')
+        : '-',
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Peserta');
+
+    const filename = `data-${event.name.replace(/[^a-z0-9]+/gi, '-').replace(/^-|-$/g, '').toLowerCase() || 'kegiatan'}.xlsx`;
+    XLSX.writeFile(workbook, filename);
   };
 
   if (loading) {
@@ -299,9 +324,21 @@ export default function EventDetailPage() {
       </div>
 
       {/* Attendance list */}
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="text-lg font-bold text-gray-900">Daftar Peserta</h2>
-        <span className="text-sm text-gray-500">{filtered.length} peserta</span>
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center justify-between gap-3">
+          <h2 className="text-lg font-bold text-gray-900">Daftar Peserta</h2>
+          <span className="text-sm text-gray-500">{filtered.length} peserta</span>
+        </div>
+        <Button
+          variant="secondary"
+          size="sm"
+          onClick={exportAttendances}
+          disabled={filtered.length === 0}
+          className="w-full sm:w-auto"
+        >
+          <FileSpreadsheet size={16} />
+          Export Excel
+        </Button>
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
