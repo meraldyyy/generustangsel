@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
-  QrCode, CalendarDays, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight,
+ CalendarDays, Clock, CheckCircle2, AlertCircle, Loader2, ArrowRight,
 } from 'lucide-react';
 import { PublicLayout } from '@/components/Layout';
 import { Button } from '@/components/ui/Button';
@@ -164,7 +164,7 @@ export default function AttendancePage() {
             <CheckCircle2 size={32} />
           </div>
           <h1 className="text-xl font-bold text-gray-900">Absensi Berhasil!</h1>
-          <p className="mt-2 mb-6 text-gray-500">Terima kasih, kehadiran Anda telah tercatat.</p>
+          <p className="mt-2 mb-6 text-gray-500">Alhamdulillah Jazaakumullahu Khoiro, kehadiran Anda telah tercatat.</p>
           <Link to={`/verify/${result.token}`}>
             <Button size="lg">
               Lihat Bukti Absensi
@@ -180,10 +180,17 @@ export default function AttendancePage() {
   return (
     <PublicLayout>
       <div className="mb-6 flex items-center justify-center gap-2">
-        <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 text-white">
-          <QrCode size={22} />
-        </div>
-        <span className="text-lg font-bold text-gray-900">AbsensiQR</span>
+       
+        <div className="flex items-center gap-3">
+              <img
+                src="/logo.png"
+                alt="Logo Generus Tangsel"
+                className="h-9 w-9 object-contain"
+              />
+              <span className="font-bold text-gray-900">
+                Generus Tangsel
+              </span>
+            </div>
       </div>
 
       {event && (
