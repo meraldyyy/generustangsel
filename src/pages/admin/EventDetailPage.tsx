@@ -9,7 +9,7 @@ import { Button } from '@/components/ui/Button';
 import { Select } from '@/components/ui/Input';
 import { QRCode } from '@/components/QRCode';
 import { supabase } from '@/lib/supabase';
-import { formatDate, formatTime, formatDateTime, AGE_CATEGORIES } from '@/lib/format';
+import { formatDate, formatTime, formatDateTime, AGE_CATEGORIES, VILLAGES } from '@/lib/format';
 import type { Event, Attendance } from '@/types';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
 import { useAuth } from '@/context/AuthContext';
@@ -76,6 +76,14 @@ export default function EventDetailPage() {
     const counts: Record<string, number> = { 'Laki-laki': 0, Perempuan: 0 };
     attendances.forEach((a) => {
       if (a.gender) counts[a.gender] = (counts[a.gender] ?? 0) + 1;
+    });
+    return counts;
+  }, [attendances]);
+
+  const desaCounts = useMemo(() => {
+    const counts: Record<string, number> = Object.fromEntries(VILLAGES.map((village) => [village, 0]));
+    attendances.forEach((attendance) => {
+      if (attendance.village in counts) counts[attendance.village] += 1;
     });
     return counts;
   }, [attendances]);
@@ -275,6 +283,12 @@ export default function EventDetailPage() {
           <p className="text-sm font-medium text-gray-500">Perempuan</p>
           <p className="mt-2 text-2xl font-bold text-gray-900">{genderCounts.Perempuan}</p>
         </Card>
+        {VILLAGES.map((village) => (
+          <Card key={village} className="p-4">
+            <p className="text-sm font-medium text-gray-500">{village}</p>
+            <p className="mt-2 text-2xl font-bold text-gray-900">{desaCounts[village]}</p>
+          </Card>
+        ))}
       </div>
 
       {/* Attendance list */}

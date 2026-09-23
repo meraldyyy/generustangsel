@@ -36,3 +36,14 @@ export function formatDateTime(dateStr: string): string {
 }
 
 export const AGE_CATEGORIES = ['SMP', 'SMA', 'PRANIKAH'] as const;
+
+export const VILLAGES = [
+  'Pamulang',
+  'Babakan',
+  'Pondok Benda',
+  'Sarua Barokah',
+  'Bambu Apus',
+  'Ciputat Barokah',
+  'Pondok Cabe',
+  'Jombang',
+] as const;

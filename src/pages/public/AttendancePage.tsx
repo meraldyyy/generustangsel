@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/Button';
 import { Input, Select } from '@/components/ui/Input';
 import { Spinner } from '@/components/ui/Card';
 import { supabase } from '@/lib/supabase';
-import { formatDate, formatTime, AGE_CATEGORIES } from '@/lib/format';
+import { formatDate, formatTime, AGE_CATEGORIES, VILLAGES } from '@/lib/format';
 import type { EventForAttendance, SubmitAttendanceResult, AgeCategory, Gender } from '@/types';
 
 type PageState = 'loading' | 'not_found' | 'closed' | 'form' | 'submitting' | 'success' | 'already';
@@ -215,15 +215,19 @@ export default function AttendancePage() {
             error={errors.name}
             disabled={state === 'submitting'}
           />
-          <Input
+          <Select
             label="Desa"
             required
             value={village}
             onChange={(e) => setVillage(e.target.value)}
-            placeholder="Nama desa"
             error={errors.village}
             disabled={state === 'submitting'}
-          />
+          >
+            <option value="">Pilih desa...</option>
+            {VILLAGES.map((villageName) => (
+              <option key={villageName} value={villageName}>{villageName}</option>
+            ))}
+          </Select>
           <Input
             label="Kelompok"
             required
