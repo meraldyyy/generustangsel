@@ -64,29 +64,36 @@ export default function EventDetailPage() {
     load();
   }, [id]);
 
+  const countableAttendances = useMemo(
+    () => filterCategory
+      ? attendances.filter((attendance) => attendance.age_category === filterCategory)
+      : attendances,
+    [attendances, filterCategory],
+  );
+
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { SMP: 0, SMA: 0, PRANIKAH: 0 };
-    attendances.forEach((a) => {
+    countableAttendances.forEach((a) => {
       counts[a.age_category] = (counts[a.age_category] ?? 0) + 1;
     });
     return counts;
-  }, [attendances]);
+  }, [countableAttendances]);
 
   const genderCounts = useMemo(() => {
     const counts: Record<string, number> = { 'Laki-laki': 0, Perempuan: 0 };
-    attendances.forEach((a) => {
+    countableAttendances.forEach((a) => {
       if (a.gender) counts[a.gender] = (counts[a.gender] ?? 0) + 1;
     });
     return counts;
-  }, [attendances]);
+  }, [countableAttendances]);
 
   const desaCounts = useMemo(() => {
     const counts: Record<string, number> = Object.fromEntries(VILLAGES.map((village) => [village, 0]));
-    attendances.forEach((attendance) => {
+    countableAttendances.forEach((attendance) => {
       if (attendance.village in counts) counts[attendance.village] += 1;
     });
     return counts;
-  }, [attendances]);
+  }, [countableAttendances]);
 
   const filtered = useMemo(() => {
     return attendances.filter((a) => {
@@ -267,7 +274,7 @@ export default function EventDetailPage() {
             <Users size={18} className="text-blue-600" />
             <p className="text-sm font-medium text-gray-500">Total</p>
           </div>
-          <p className="mt-2 text-2xl font-bold text-gray-900">{attendances.length}</p>
+          <p className="mt-2 text-2xl font-bold text-gray-900">{countableAttendances.length}</p>
         </Card>
         {AGE_CATEGORIES.map((cat) => (
           <Card key={cat} className="p-4">
