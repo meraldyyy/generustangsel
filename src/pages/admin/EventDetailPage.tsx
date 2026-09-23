@@ -256,6 +256,15 @@ export default function EventDetailPage() {
           <QrCode size={18} />
           Tampilkan QR
         </Button>
+        <Button
+          variant="secondary"
+          onClick={exportAttendances}
+          disabled={filtered.length === 0}
+          className="w-full sm:w-auto"
+        >
+          <FileSpreadsheet size={18} />
+          Export Excel
+        </Button>
       </div>
 
       <ConfirmDialog
@@ -329,16 +338,6 @@ export default function EventDetailPage() {
           <h2 className="text-lg font-bold text-gray-900">Daftar Peserta</h2>
           <span className="text-sm text-gray-500">{filtered.length} peserta</span>
         </div>
-        <Button
-          variant="secondary"
-          size="sm"
-          onClick={exportAttendances}
-          disabled={filtered.length === 0}
-          className="w-full sm:w-auto"
-        >
-          <FileSpreadsheet size={16} />
-          Export Excel
-        </Button>
       </div>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
