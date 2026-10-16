@@ -66,16 +66,16 @@ export default function EventDetailPage() {
   }, [id]);
 
   const countableAttendances = useMemo(
-    () => filterCategory
+    () => event?.event_type === 'UMUM' && filterCategory
       ? attendances.filter((attendance) => attendance.age_category === filterCategory)
       : attendances,
-    [attendances, filterCategory],
+    [attendances, event?.event_type, filterCategory],
   );
 
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { SMP: 0, SMA: 0, PRANIKAH: 0 };
     countableAttendances.forEach((a) => {
-      counts[a.age_category] = (counts[a.age_category] ?? 0) + 1;
+      if (a.age_category) counts[a.age_category] = (counts[a.age_category] ?? 0) + 1;
     });
     return counts;
   }, [countableAttendances]);
@@ -102,10 +102,10 @@ export default function EventDetailPage() {
         a.name.toLowerCase().includes(search.toLowerCase()) ||
         a.village.toLowerCase().includes(search.toLowerCase()) ||
         a.group_name.toLowerCase().includes(search.toLowerCase());
-      const matchCategory = !filterCategory || a.age_category === filterCategory;
+      const matchCategory = event?.event_type !== 'UMUM' || !filterCategory || a.age_category === filterCategory;
       return matchSearch && matchCategory;
     });
-  }, [attendances, search, filterCategory]);
+  }, [attendances, event?.event_type, search, filterCategory]);
 
   const updateStatus = async (newStatus: 'draft' | 'open' | 'closed') => {
     if (!event) return;
@@ -143,21 +143,36 @@ export default function EventDetailPage() {
   };
 
   const exportAttendances = () => {
-    if (!event || filtered.length === 0) return;
+    if (!event) return;
 
-    const rows = filtered.map((attendance, index) => ({
-      No: index + 1,
-      Nama: attendance.name,
-      Desa: attendance.village,
-      Kelompok: attendance.group_name,
-      Kategori: attendance.age_category,
-      'Jenis Kelamin': attendance.gender ?? '-',
-      'Waktu Absen': formatDateTime(attendance.checked_in_at),
-      Status: attendance.verified_at ? 'Terverifikasi' : 'Belum',
-      'Diverifikasi oleh': attendance.verified_by
-        ? (adminNames[attendance.verified_by] ?? 'Admin')
-        : '-',
-    }));
+    const rows = event.event_type === 'PRANIKAH' || event.event_type === 'USIA NIKAH'
+      ? filtered.map((attendance, index) => ({
+          No: index + 1,
+          Nama: attendance.name,
+          'Jenis Kelamin': attendance.gender ?? '-',
+          Kelompok: attendance.group_name,
+          Desa: attendance.village,
+          Usia: attendance.age ?? '-',
+          Pekerjaan: attendance.occupation ?? '-',
+          Pendidikan: attendance.education ?? '-',
+          'Waktu Absen': formatDateTime(attendance.checked_in_at),
+          Status: attendance.verified_at ? 'Terverifikasi' : 'Belum',
+        }))
+      : filtered.map((attendance, index) => ({
+          No: index + 1,
+          Nama: attendance.name,
+          Desa: attendance.village,
+          Kelompok: attendance.group_name,
+          Kategori: attendance.age_category,
+          'Jenis Kelamin': attendance.gender ?? '-',
+          'Waktu Absen': formatDateTime(attendance.checked_in_at),
+          Status: attendance.verified_at ? 'Terverifikasi' : 'Belum',
+          'Diverifikasi oleh': attendance.verified_by
+            ? (adminNames[attendance.verified_by] ?? 'Admin')
+            : '-',
+        }));
+    if (rows.length === 0) return;
+
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Peserta');
@@ -188,6 +203,7 @@ export default function EventDetailPage() {
   }
 
   const attendanceUrl = `${window.location.origin}/attendance/${event.id}`;
+  const isSpecialEvent = event.event_type === 'PRANIKAH' || event.event_type === 'USIA NIKAH';
 
   return (
     <AdminLayout>
@@ -207,6 +223,7 @@ export default function EventDetailPage() {
               {statusLabels[event.status]}
             </span>
           </div>
+          <p className="mt-1 text-sm font-semibold text-blue-700">{event.event_type}</p>
           {event.description && <p className="mt-2 text-gray-600">{event.description}</p>}
           <p className="mt-2 text-sm text-gray-500">
             {formatDate(event.event_date)} • {formatTime(event.start_time)} - {formatTime(event.end_time)}
@@ -310,7 +327,7 @@ export default function EventDetailPage() {
           </div>
           <p className="mt-2 text-2xl font-bold text-gray-900">{countableAttendances.length}</p>
         </Card>
-        {AGE_CATEGORIES.map((cat) => (
+        {!isSpecialEvent && AGE_CATEGORIES.map((cat) => (
           <Card key={cat} className="p-4">
             <p className="text-sm font-medium text-gray-500">{cat}</p>
             <p className="mt-2 text-2xl font-bold text-gray-900">{categoryCounts[cat] ?? 0}</p>
@@ -351,12 +368,14 @@ export default function EventDetailPage() {
             className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-10 pr-4 text-gray-900 placeholder-gray-400 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
           />
         </div>
-        <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="sm:w-48">
-          <option value="">Semua Kategori</option>
-          {AGE_CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </Select>
+        {!isSpecialEvent && (
+          <Select value={filterCategory} onChange={(e) => setFilterCategory(e.target.value)} className="sm:w-48">
+            <option value="">Semua Kategori</option>
+            {AGE_CATEGORIES.map((cat) => (
+              <option key={cat} value={cat}>{cat}</option>
+            ))}
+          </Select>
+        )}
       </div>
 
       {filtered.length === 0 ? (
@@ -376,10 +395,23 @@ export default function EventDetailPage() {
                 <tr>
                   <th className="px-4 py-3 font-semibold text-gray-600">No</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Nama</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Desa</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Kelompok</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Kategori</th>
-                  <th className="px-4 py-3 font-semibold text-gray-600">Jenis Kelamin</th>
+                  {isSpecialEvent ? (
+                    <>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Jenis Kelamin</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Kelompok</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Desa</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Usia</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Pekerjaan</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Pendidikan</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Desa</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Kelompok</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Kategori</th>
+                      <th className="px-4 py-3 font-semibold text-gray-600">Jenis Kelamin</th>
+                    </>
+                  )}
                   <th className="px-4 py-3 font-semibold text-gray-600">Waktu Absen</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Status</th>
                   <th className="px-4 py-3 font-semibold text-gray-600">Diverifikasi oleh</th>
@@ -390,14 +422,27 @@ export default function EventDetailPage() {
                   <tr key={att.id} className="hover:bg-gray-50">
                     <td className="px-4 py-3 text-gray-400">{idx + 1}</td>
                     <td className="px-4 py-3 font-medium text-gray-900">{att.name}</td>
-                    <td className="px-4 py-3 text-gray-600">{att.village}</td>
-                    <td className="px-4 py-3 text-gray-600">{att.group_name}</td>
-                    <td className="px-4 py-3">
-                      <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                        {att.age_category}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3 text-gray-600">{att.gender ?? '-'}</td>
+                    {isSpecialEvent ? (
+                      <>
+                        <td className="px-4 py-3 text-gray-600">{att.gender ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.group_name}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.village}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.age ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.occupation ?? '-'}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.education ?? '-'}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-3 text-gray-600">{att.village}</td>
+                        <td className="px-4 py-3 text-gray-600">{att.group_name}</td>
+                        <td className="px-4 py-3">
+                          <span className="rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                            {att.age_category}
+                          </span>
+                        </td>
+                        <td className="px-4 py-3 text-gray-600">{att.gender ?? '-'}</td>
+                      </>
+                    )}
                     <td className="px-4 py-3 text-gray-600">{formatDateTime(att.checked_in_at)}</td>
                     <td className="px-4 py-3">
                       {att.verified_at ? (
@@ -426,10 +471,17 @@ export default function EventDetailPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-medium text-gray-900">{idx + 1}. {att.name}</p>
                     <p className="mt-0.5 text-sm text-gray-500">{att.village} • {att.group_name} • {att.gender ?? '-'}</p>
+                    {isSpecialEvent && (
+                      <p className="mt-1 text-xs text-gray-500">
+                        Usia {att.age ?? '-'} • {att.occupation ?? '-'} • {att.education ?? '-'}
+                      </p>
+                    )}
                   </div>
-                  <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
-                    {att.age_category}
-                  </span>
+                  {!isSpecialEvent && (
+                    <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                      {att.age_category}
+                    </span>
+                  )}
                 </div>
                 <div className="mt-2 flex items-center justify-between text-xs">
                   <span className="text-gray-400">{formatDateTime(att.checked_in_at)}</span>

@@ -1,5 +1,7 @@
 export type EventStatus = 'draft' | 'open' | 'closed';
 
+export type EventType = 'UMUM' | 'PRANIKAH' | 'USIA NIKAH';
+
 export type AgeCategory = 'SMP' | 'SMA' | 'PRANIKAH';
 
 export type Gender = 'Laki-laki' | 'Perempuan';
@@ -8,6 +10,7 @@ export interface Event {
   id: string;
   name: string;
   description: string | null;
+  event_type: EventType;
   event_date: string;
   start_time: string;
   end_time: string;
@@ -33,8 +36,11 @@ export interface Attendance {
   name: string;
   village: string;
   group_name: string;
-  age_category: AgeCategory;
+  age_category: AgeCategory | null;
   gender: Gender | null;
+  age: number | null;
+  occupation: string | null;
+  education: string | null;
   checked_in_at: string;
   verification_token: string;
   verified_at: string | null;
@@ -56,6 +62,9 @@ export interface SubmitAttendanceResult {
   group_name?: string;
   age_category?: AgeCategory;
   gender?: Gender;
+  age?: number;
+  occupation?: string;
+  education?: string;
 }
 
 export interface VerifyAttendanceResult {
@@ -67,8 +76,12 @@ export interface VerifyAttendanceResult {
     name: string;
     village: string;
     group_name: string;
-    age_category: AgeCategory;
+    age_category: AgeCategory | null;
     gender: Gender | null;
+    age: number | null;
+    occupation: string | null;
+    education: string | null;
+    event_type: EventType;
     checked_in_at: string;
     event_name: string;
     event_date: string;
@@ -86,4 +99,5 @@ export interface EventForAttendance {
   start_time: string;
   end_time: string;
   status: EventStatus;
+  event_type: EventType;
 }

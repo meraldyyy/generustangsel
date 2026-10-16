@@ -25,7 +25,13 @@ export default function AttendancePage() {
   const [groupName, setGroupName] = useState('');
   const [category, setCategory] = useState<AgeCategory | ''>('');
   const [gender, setGender] = useState<Gender | ''>('');
+  const [age, setAge] = useState('');
+  const [occupation, setOccupation] = useState('');
+  const [otherOccupation, setOtherOccupation] = useState('');
+  const [education, setEducation] = useState('');
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  const isSpecialEvent = event?.event_type === 'PRANIKAH' || event?.event_type === 'USIA NIKAH';
 
   useEffect(() => {
     if (!eventId) return;
@@ -51,8 +57,17 @@ export default function AttendancePage() {
     if (!name.trim()) e.name = 'Nama wajib diisi';
     if (!village.trim()) e.village = 'Desa wajib diisi';
     if (!groupName.trim()) e.groupName = 'Kelompok wajib diisi';
-    if (!category) e.category = 'Kategori wajib dipilih';
     if (!gender) e.gender = 'Jenis kelamin wajib dipilih';
+    if (isSpecialEvent) {
+      if (!Number.isInteger(Number(age)) || Number(age) <= 0) e.age = 'Usia harus berupa angka lebih dari 0';
+      if (!occupation) e.occupation = 'Pekerjaan wajib dipilih';
+      if (occupation === 'Lainnya' && !otherOccupation.trim()) {
+        e.otherOccupation = 'Pekerjaan lainnya wajib diisi';
+      }
+      if (!education) e.education = 'Pendidikan wajib dipilih';
+    } else {
+      if (!category) e.category = 'Kategori wajib dipilih';
+    }
     setErrors(e);
     return Object.keys(e).length === 0;
   };
@@ -62,14 +77,25 @@ export default function AttendancePage() {
     if (!validate() || !eventId) return;
     setState('submitting');
 
-    const { data, error } = await supabase.rpc('submit_attendance', {
-      p_event_id: eventId,
-      p_name: name,
-      p_village: village,
-      p_group_name: groupName,
-      p_age_category: category,
-      p_gender: gender,
-    });
+    const { data, error } = isSpecialEvent
+      ? await supabase.rpc('submit_special_attendance', {
+          p_event_id: eventId,
+          p_name: name,
+          p_village: village,
+          p_group_name: groupName,
+          p_gender: gender,
+          p_age: Number(age),
+          p_occupation: occupation === 'Lainnya' ? otherOccupation.trim() : occupation,
+          p_education: education,
+        })
+      : await supabase.rpc('submit_attendance', {
+          p_event_id: eventId,
+          p_name: name,
+          p_village: village,
+          p_group_name: groupName,
+          p_age_category: category,
+          p_gender: gender,
+        });
 
     if (error) {
       setState('form');
@@ -196,6 +222,7 @@ export default function AttendancePage() {
       {event && (
         <div className="mb-6 rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
           <h1 className="text-xl font-bold text-gray-900">{event.name}</h1>
+          <p className="mt-1 text-xs font-semibold uppercase tracking-wide text-blue-700">{event.event_type}</p>
           <div className="mt-3 space-y-1.5 text-sm text-gray-600">
             <div className="flex items-center gap-2">
               <CalendarDays size={16} className="text-gray-400" />
@@ -210,7 +237,9 @@ export default function AttendancePage() {
       )}
 
       <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-        <h2 className="mb-4 text-lg font-semibold text-gray-900">Isi Data Absensi</h2>
+        <h2 className="mb-4 text-lg font-semibold text-gray-900">
+          {isSpecialEvent ? 'Konfirmasi Kehadiran' : 'Isi Data Absensi'}
+        </h2>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <Input
@@ -222,6 +251,31 @@ export default function AttendancePage() {
             error={errors.name}
             disabled={state === 'submitting'}
           />
+          {isSpecialEvent && (
+            <Select
+              label="Jenis Kelamin"
+              required
+              value={gender}
+              onChange={(e) => setGender(e.target.value as Gender)}
+              error={errors.gender}
+              disabled={state === 'submitting'}
+            >
+              <option value="">Pilih jenis kelamin...</option>
+              <option value="Laki-laki">Laki-laki</option>
+              <option value="Perempuan">Perempuan</option>
+            </Select>
+          )}
+          {isSpecialEvent && (
+            <Input
+              label="Kelompok"
+              required
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Nomor/nama kelompok"
+              error={errors.groupName}
+              disabled={state === 'submitting'}
+            />
+          )}
           <Select
             label="Desa"
             required
@@ -235,40 +289,108 @@ export default function AttendancePage() {
               <option key={villageName} value={villageName}>{villageName}</option>
             ))}
           </Select>
-          <Input
-            label="Kelompok"
-            required
-            value={groupName}
-            onChange={(e) => setGroupName(e.target.value)}
-            placeholder="Nomor/nama kelompok"
-            error={errors.groupName}
-            disabled={state === 'submitting'}
-          />
-          <Select
-            label="Kategori"
-            required
-            value={category}
-            onChange={(e) => setCategory(e.target.value as AgeCategory)}
-            error={errors.category}
-            disabled={state === 'submitting'}
-          >
-            <option value="">Pilih kategori...</option>
-            {AGE_CATEGORIES.map((cat) => (
-              <option key={cat} value={cat}>{cat}</option>
-            ))}
-          </Select>
-          <Select
-            label="Jenis Kelamin"
-            required
-            value={gender}
-            onChange={(e) => setGender(e.target.value as Gender)}
-            error={errors.gender}
-            disabled={state === 'submitting'}
-          >
-            <option value="">Pilih jenis kelamin...</option>
-            <option value="Laki-laki">Laki-laki</option>
-            <option value="Perempuan">Perempuan</option>
-          </Select>
+          {!isSpecialEvent && (
+            <Input
+              label="Kelompok"
+              required
+              value={groupName}
+              onChange={(e) => setGroupName(e.target.value)}
+              placeholder="Nomor/nama kelompok"
+              error={errors.groupName}
+              disabled={state === 'submitting'}
+            />
+          )}
+          {isSpecialEvent ? (
+            <>
+              <Input
+                label="Usia"
+                type="number"
+                min="1"
+                step="1"
+                required
+                value={age}
+                onChange={(e) => setAge(e.target.value)}
+                placeholder="Usia dalam tahun"
+                error={errors.age}
+                disabled={state === 'submitting'}
+              />
+              <Select
+                label="Pekerjaan"
+                required
+                value={occupation}
+                onChange={(e) => setOccupation(e.target.value)}
+                error={errors.occupation}
+                disabled={state === 'submitting'}
+              >
+                <option value="">Pilih pekerjaan...</option>
+                <option value="Guru">Guru</option>
+                <option value="Karyawan swasta">Karyawan swasta</option>
+                <option value="Wirausaha">Wirausaha</option>
+                <option value="PNS">PNS</option>
+                <option value="Tidak/belum bekerja">Tidak/belum bekerja</option>
+                <option value="Lainnya">Lainnya</option>
+              </Select>
+              {occupation === 'Lainnya' && (
+                <Input
+                  label="Pekerjaan lainnya"
+                  required
+                  maxLength={100}
+                  value={otherOccupation}
+                  onChange={(e) => setOtherOccupation(e.target.value)}
+                  placeholder="Tulis pekerjaan"
+                  error={errors.otherOccupation}
+                  disabled={state === 'submitting'}
+                />
+              )}
+              <Select
+                label="Pendidikan Terakhir"
+                required
+                value={education}
+                onChange={(e) => setEducation(e.target.value)}
+                error={errors.education}
+                disabled={state === 'submitting'}
+              >
+                <option value="">Pilih pendidikan...</option>
+                <option value="SMP">SMP</option>
+                <option value="SMA">SMA</option>
+                <option value="Undergraduate">Undergraduate</option>
+                <option value="D3">D3</option>
+                <option value="D4">D4</option>
+                <option value="S1">S1</option>
+                <option value="S2">S2</option>
+              </Select>
+            </>
+          ) : (
+            <>
+              <Select
+                label="Kategori"
+                required
+                value={category}
+                onChange={(e) => setCategory(e.target.value as AgeCategory)}
+                error={errors.category}
+                disabled={state === 'submitting'}
+              >
+                <option value="">Pilih kategori...</option>
+                {AGE_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>{cat}</option>
+                ))}
+              </Select>
+            </>
+          )}
+          {!isSpecialEvent && (
+            <Select
+              label="Jenis Kelamin"
+              required
+              value={gender}
+              onChange={(e) => setGender(e.target.value as Gender)}
+              error={errors.gender}
+              disabled={state === 'submitting'}
+            >
+              <option value="">Pilih jenis kelamin...</option>
+              <option value="Laki-laki">Laki-laki</option>
+              <option value="Perempuan">Perempuan</option>
+            </Select>
+          )}
 
           {errors.form && (
             <div className="rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700">{errors.form}</div>
@@ -281,7 +403,7 @@ export default function AttendancePage() {
                 Memproses...
               </>
             ) : (
-              'ABSEN SEKARANG'
+              isSpecialEvent ? 'KONFIRMASI KEHADIRAN' : 'ABSEN SEKARANG'
             )}
           </Button>
         </form>

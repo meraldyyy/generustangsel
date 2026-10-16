@@ -93,6 +93,9 @@ export default function EventsPage() {
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="truncate font-semibold text-gray-900">{event.name}</h3>
+                      <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-xs font-semibold text-blue-700">
+                        {event.event_type}
+                      </span>
                       <span className={`shrink-0 rounded-full px-2 py-0.5 text-xs font-semibold ${statusColors[event.status]}`}>
                         {statusLabels[event.status]}
                       </span>

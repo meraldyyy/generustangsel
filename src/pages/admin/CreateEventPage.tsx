@@ -3,15 +3,17 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, CalendarPlus } from 'lucide-react';
 import { AdminLayout } from '@/components/Layout';
 import { Button } from '@/components/ui/Button';
-import { Input, Textarea } from '@/components/ui/Input';
+import { Input, Select, Textarea } from '@/components/ui/Input';
 import { supabase } from '@/lib/supabase';
 import { useAuth } from '@/context/AuthContext';
 import { ConfirmDialog } from '@/components/ui/ConfirmDialog';
+import type { EventType } from '@/types';
 
 export default function CreateEventPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const [name, setName] = useState('');
+  const [eventType, setEventType] = useState<EventType>('UMUM');
   const [description, setDescription] = useState('');
   const [eventDate, setEventDate] = useState('');
   const [startTime, setStartTime] = useState('');
@@ -44,6 +46,7 @@ export default function CreateEventPage() {
       .insert({
         name: name.trim(),
         description: description.trim() || null,
+        event_type: eventType,
         event_date: eventDate,
         start_time: startTime,
         end_time: endTime,
@@ -85,6 +88,17 @@ export default function CreateEventPage() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Contoh: Pertemuan Pemuda Desa"
         />
+
+        <Select
+          label="Jenis Kegiatan"
+          required
+          value={eventType}
+          onChange={(e) => setEventType(e.target.value as EventType)}
+        >
+          <option value="UMUM">UMUM</option>
+          <option value="PRANIKAH">PRANIKAH</option>
+          <option value="USIA NIKAH">USIA NIKAH</option>
+        </Select>
 
         <Textarea
           label="Deskripsi (opsional)"

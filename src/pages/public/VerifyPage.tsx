@@ -66,6 +66,25 @@ export default function VerifyPage() {
   }
 
   const d = result.data;
+  const details = d.event_type === 'PRANIKAH' || d.event_type === 'USIA NIKAH'
+    ? [
+        ['Nama', d.name],
+        ['Jenis Kelamin', d.gender ?? '-'],
+        ['Kelompok', d.group_name],
+        ['Desa', d.village],
+        ['Usia', d.age?.toString() ?? '-'],
+        ['Pekerjaan', d.occupation ?? '-'],
+        ['Pendidikan', d.education ?? '-'],
+        ['Kegiatan', d.event_name],
+      ]
+    : [
+        ['Nama', d.name],
+        ['Desa', d.village],
+        ['Kelompok', d.group_name],
+        ['Kategori', d.age_category ?? '-'],
+        ['Jenis Kelamin', d.gender ?? '-'],
+        ['Kegiatan', d.event_name],
+      ];
 
   return (
     <PublicLayout>
@@ -93,14 +112,7 @@ export default function VerifyPage() {
         {/* Details */}
         <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
           <div className="divide-y divide-gray-100">
-            {[
-              ['Nama', d.name],
-              ['Desa', d.village],
-              ['Kelompok', d.group_name],
-              ['Kategori', d.age_category],
-              ['Jenis Kelamin', d.gender ?? '-'],
-              ['Kegiatan', d.event_name],
-            ].map(([label, value]) => (
+            {details.map(([label, value]) => (
               <div key={label} className="flex justify-between py-2.5">
                 <span className="text-sm font-medium text-gray-500">{label}</span>
                 <span className="text-sm font-semibold text-gray-900 text-right">{value}</span>
